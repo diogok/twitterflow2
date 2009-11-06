@@ -126,20 +126,6 @@ public class ProcessQueue  {
         new Thread(r).start();
     }
 
-    private void remove(int id) {
-        Runnable[] oldList = new Runnable[count - 1];
-        for(int i=0;i < count;i++) {
-            if(i == id) continue;
-            oldList[i] = list[i];
-        }
-        list = new Runnable[list.length];
-        for(int i =0;i < count;i++) {
-            list[i] = oldList[i];
-        }
-        count-- ;
-        System.gc();
-    }
-
     public void reset() {
         list = new Runnable[size];
         count = 0;

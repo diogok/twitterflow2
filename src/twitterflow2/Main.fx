@@ -71,24 +71,6 @@ function getImage(url:String, width: Integer, height: Integer) {
     return im;
 }
 
-class Link extends Group {
-
-    public-init var action: function(): Void ;
-    public-init var text: String ;
-
-    override var content = [ Rectangle {
-                              width: bind text.length() * 8
-                              height: 14
-                              fill: Color.TRANSPARENT
-                              translateY: -12
-                              cursor: Cursor.HAND
-                              onMouseClicked: function(e: MouseEvent) { action() ;}
-                            }
-                            , Text { fill: Color.rgb(0,153,255), content: bind text
-                                    font: Font {size: 10 }
-                            } ];
-}
-
 function createLine(id: Long, image: String, name:String, text:String , date:Date):TweetLine {
     return TweetLine {
         profileImageUrl: image
@@ -116,7 +98,7 @@ class TweetLine extends CustomNode  {
     }
 
     function direct():Void {
-        input.text = "d @{screenName} ";
+        input.text = "d {screenName} ";
     }
 
     function link(url: String): Void {
@@ -127,8 +109,11 @@ class TweetLine extends CustomNode  {
         openURL("http://twitter.com/{screenName}/statuses/{tweetId}");
     }
 
-    override function create() {
+    function seeUser(): Void {
+        openURL("http://twitter.com/{screenName}");
+    }
 
+    override function create() {
 
         def hbox:HBox =HBox {
                 spacing: 5
@@ -139,7 +124,7 @@ class TweetLine extends CustomNode  {
                         image: getImage(profileImageUrl,46,46)
                         cursor: Cursor.HAND
                         onMouseClicked: function( e: MouseEvent ):Void {
-                            openURL("http://twitter.com/{screenName}");
+                                seeUser();
                         }
                         translateY: 5
                     }
@@ -155,17 +140,20 @@ class TweetLine extends CustomNode  {
         def formatedDate = date.toLocaleString()
                         .replaceAll("^([0-9]\{2\})/([0-9]\{2\})/([0-9]\{4\}) ([0-9]\{2\}):([0-9]\{2\}):([0-9]\{2\})$"
                                     , "$2-$1 $4:$5:$6") ;
-        
-        def actions: HBox = HBox {
-            spacing: 0
+
+        def status: HBox = HBox {
+            spacing: 5
             translateY: 65
-            content: [  
-                        Link { text: "RT", action: retweet },
-                        Link { text: "RP", action: reply },
-                        Link { text: "DM", action: direct },
-                        Link { text: formatedDate, action: seeTweet }
+            content: [
+                        Text {
+                            fill: Color.rgb(0,153,255),
+                            content: formatedDate,
+                            font: Font {size: 10}
+                        }
                     ]
         }
+
+
         
         def rect: Rectangle = Rectangle {
             fill: Color.rgb(80, 80, 80);
@@ -174,12 +162,11 @@ class TweetLine extends CustomNode  {
         }
 
         def group: Group = Group {
-            content: [ rect,hbox, actions ]
+            content: [ rect, hbox, status ]
         }
 
         return group ;
     }
-
 }
 
 def sysTray: SystemTray = SystemTray.getSystemTray();
@@ -658,7 +645,6 @@ public function openURL(url:String): Void {
            if (found == false) {
               found = Runtime.getRuntime().exec(["which", browser]).waitFor() == 0;
               if (found) {
-                 println("{browser} {url}");
                  Runtime.getRuntime().exec("{browser} {url}");
               }
            }
@@ -672,9 +658,10 @@ function run() {
         var atk: AccessToken = getToken();
         if(atk.getToken().length() <= 4) {
             throw new Exception("No token");
+        } else {
+            twitter.setOAuthAccessToken(atk);
+            startApp();
         }
-        twitter.setOAuthAccessToken(atk);
-        startApp();
     } catch(e: Exception) {
         e.printStackTrace();
         openConfig();
