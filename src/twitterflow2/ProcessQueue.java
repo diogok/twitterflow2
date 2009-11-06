@@ -14,23 +14,47 @@ public class ProcessQueue  {
     private Runnable[] list ;
     private int count ;
     private Long time;
+    private Long between;
     private boolean active;
+    private boolean loop;
     private int size = 2;
 
     public ProcessQueue() {
         active = true;
+        loop = true ;
         this.time =  1000L;
+        this.between = 0L;
         list = new Runnable[size];
         count = 0;
     }
 
     public ProcessQueue(Long time) {
         active = true;
+        loop = true ;
         this.time = time;
+        this.between = 0L;
         list = new Runnable[size];
         count = 0;
     }
-    
+
+    public ProcessQueue(Long time, Long between) {
+        active = true;
+        loop = true ;
+        this.time = time;
+        this.between = between;
+        list = new Runnable[size];
+        count = 0;
+    }
+
+    public ProcessQueue(Long time, Long between, boolean loop) {
+        active = true;
+        this.loop = loop ;
+        this.time = time;
+        this.between = between;
+        list = new Runnable[size];
+        count = 0;
+    }
+
     private void rebuild() {
         Runnable[] oldList = new Runnable[count];
         for(int i=0;i < count;i++) {
@@ -56,6 +80,7 @@ public class ProcessQueue  {
             insert(r);
         }
     }
+    
     public int insert(Runnable r) {
         if(count == list.length) {
             rebuild();
@@ -72,9 +97,15 @@ public class ProcessQueue  {
                 while(active) {
                     if(count >= 1) {
                         Runnable[] myList = list ;
+                        list = new Runnable[list.length];
                         for(int i =0;i<myList.length;i++) {
                             if(active && myList[i] != null) {
                                 myList[i].run();
+                                try {
+                                    sleep(between);
+                                } catch (InterruptedException ex) {
+                                    ex.printStackTrace();
+                                }
                             }
                         }
                         myList = null;
@@ -95,7 +126,7 @@ public class ProcessQueue  {
         new Thread(r).start();
     }
 
-    public void remove(int id) {
+    private void remove(int id) {
         Runnable[] oldList = new Runnable[count - 1];
         for(int i=0;i < count;i++) {
             if(i == id) continue;
@@ -112,6 +143,10 @@ public class ProcessQueue  {
     public void reset() {
         list = new Runnable[size];
         count = 0;
+    }
+
+    public void stop() {
+        active = false ;
     }
 
     public Runnable[] getList() {

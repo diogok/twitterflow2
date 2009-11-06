@@ -45,8 +45,6 @@ import javafx.scene.Group;
 import javafx.scene.CustomNode;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font ;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.Date;
 import twitter4j.DirectMessage;
 
@@ -131,37 +129,6 @@ class TweetLine extends CustomNode  {
 
     override function create() {
 
-        var html =  "<font color=#00aaff><a href=http://twitter.com/{screenName}>"
-                    "{screenName}</a></font>"
-                    "<font color=#ffffff>: {text}</font>";
-
-        var patttern: Pattern = Pattern.compile("(http://[^ )]+)");
-        var matcher: Matcher = patttern.matcher(text);
-        while(matcher.find()) {
-            html = html.replaceAll(matcher.group()
-                , "<font color=#00aaff>"
-                  "<a href={matcher.group()}>{matcher.group()}</a>"
-                  "</font>");
-        }
-
-        patttern = Pattern.compile("#([^ ).,:]+)");
-        matcher = patttern.matcher(text);
-        while(matcher.find()) {
-           html =  html.replaceAll(matcher.group()
-                , "<font color=#00aaff>"
-                  "<a href=http://search.twitter.com/search?q={"%"}23{matcher.group(1)}>{matcher.group()}</a>"
-                  "</font>");
-        }
-
-        patttern = Pattern.compile("@([^ ).,:]+)");
-        matcher = patttern.matcher(text);
-        while(matcher.find()) {
-           html =  html.replaceAll(matcher.group()
-                , "<font color=#00aaff>"
-                  "<a href=http://twitter.com/{matcher.group(1)}>{matcher.group()}</a>"
-                  "</font>");
-        }
-
 
         def hbox:HBox =HBox {
                 spacing: 5
@@ -176,11 +143,11 @@ class TweetLine extends CustomNode  {
                         }
                         translateY: 5
                     }
-                    TextHTML {
+                    Text {
                      translateY: 5
-                     content: html
+                     content: "@{screenName}: {text}"
                      wrappingWidth: bind scene.width - 90
-                     onLinkPressed: link
+                     fill: Color.WHITESMOKE
                     }
                 ]
         };
@@ -188,6 +155,7 @@ class TweetLine extends CustomNode  {
         def formatedDate = date.toLocaleString()
                         .replaceAll("^([0-9]\{2\})/([0-9]\{2\})/([0-9]\{4\}) ([0-9]\{2\}):([0-9]\{2\}):([0-9]\{2\})$"
                                     , "$2-$1 $4:$5:$6") ;
+        
         def actions: HBox = HBox {
             spacing: 0
             translateY: 65
@@ -198,8 +166,7 @@ class TweetLine extends CustomNode  {
                         Link { text: formatedDate, action: seeTweet }
                     ]
         }
-
-
+        
         def rect: Rectangle = Rectangle {
             fill: Color.rgb(80, 80, 80);
             height: 80
@@ -224,12 +191,15 @@ var isDown: Boolean = false;
 def twitter: Twitter = new Twitter();
 def consumerKey :String = "tSYh5dVobnKTnxjKSqPhEQ";
 def consumerSecret: String = "zoJcXbD0xUKBrKYTQ5QOFPS0PmR8SrOzjh7rJtRdEQU";
-def resource: Resource = Storage { source: "/extras/downloads/flow-oauth-pim.txt" }.resource ;
+//def resource: Resource = Storage { source: "/extras/downloads/flow-oauth-pim.txt" }.resource ;
+def resource: Resource = Storage { source: "flow-oauth-pim.txt" }.resource ;
 
 def n: Long = 5 * 60 * 1000 ;
 def userQueue: ProcessQueue = new ProcessQueue(n);
 def n2: Long = 1 * 60 * 1000 / 2;
 def searchQueue: ProcessQueue = new ProcessQueue(n2);
+def n3: Long = 5 * 1000;
+def trayQueue: ProcessQueue = new ProcessQueue(n3,n3,false);
 
 var stage: Stage ;
 
@@ -564,14 +534,19 @@ function startStreamSearch(txt: String): Void {
     },true);
 }
 
-function showMessage(msg: String) {
-    icon.displayMessage("TwitterFlow",msg,TrayIcon.MessageType.INFO);
+function showMessage(msg: String): Void {
+    def id:Integer = trayQueue.insert(Runnable {
+            override function run() {
+                icon.displayMessage("TwitterFlow",msg,TrayIcon.MessageType.INFO);
+            }
+        });
 }
 
 function startApp(): Void {
     startStream();
     userQueue.start();
     searchQueue.start();
+    trayQueue.start();
     stage = Stage {
         title: "TwitterFlow"
         width: 352
