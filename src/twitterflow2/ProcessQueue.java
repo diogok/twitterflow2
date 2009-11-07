@@ -23,7 +23,7 @@ public class ProcessQueue  {
         active = true;
         loop = true ;
         this.time =  1000L;
-        this.between = 0L;
+        this.between = 5L;
         list = new Runnable[size];
         count = 0;
     }
@@ -32,7 +32,7 @@ public class ProcessQueue  {
         active = true;
         loop = true ;
         this.time = time;
-        this.between = 0L;
+        this.between = 5L;
         list = new Runnable[size];
         count = 0;
     }
@@ -97,7 +97,7 @@ public class ProcessQueue  {
                 while(active) {
                     if(count >= 1) {
                         Runnable[] myList = list ;
-                        list = new Runnable[list.length];
+                        if(!loop) reset();
                         for(int i =0;i<myList.length;i++) {
                             if(active && myList[i] != null) {
                                 myList[i].run();

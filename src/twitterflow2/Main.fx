@@ -44,9 +44,12 @@ import twitter4j.Tweet;
 import javafx.scene.Group;
 import javafx.scene.CustomNode;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font ;
 import java.util.Date;
 import twitter4j.DirectMessage;
+import javafx.scene.text.Font;
+import java.net.URLEncoder;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * @author diogo
@@ -115,6 +118,46 @@ class TweetLine extends CustomNode  {
 
     override function create() {
 
+        def pop:PopMenu = PopMenu {
+            itens: ["Profile","Retweet","Reply","Direct"]
+            scene: stage.scene
+            action: function(str: String) {
+                if(str == "Profile") {
+                    seeUser();
+                } else if(str == "Retweet") {
+                    retweet();
+                } else if(str == "Reply") {
+                    reply();
+                } else if(str == "Direct") {
+                    direct();
+                } else if(str.startsWith("#")){
+                    link("http://search.twitter.com/search?q={URLEncoder.encode(str)}");
+                } else if(str.startsWith("@")){
+                    link("http://twitter.com/{str.substring(1)}");
+                } else {
+                    link(str);
+                }
+            }
+        }
+
+        var patttern: Pattern = Pattern.compile("(https?://[^ ]+)");
+        var matcher: Matcher = patttern.matcher(text);
+        while(matcher.find()) {
+            insert matcher.group() into pop.itens ;
+        }
+
+        patttern = Pattern.compile("(#[^ ).,:]+)");
+        matcher = patttern.matcher(text);
+        while(matcher.find()) {
+            insert matcher.group() into pop.itens ;
+        }
+
+        patttern = Pattern.compile("(@[^ ).,:]+)");
+        matcher = patttern.matcher(text);
+        while(matcher.find()) {
+            insert matcher.group() into pop.itens ;
+        }
+
         def hbox:HBox =HBox {
                 spacing: 5
                 translateX: 5
@@ -124,12 +167,12 @@ class TweetLine extends CustomNode  {
                         image: getImage(profileImageUrl,46,46)
                         cursor: Cursor.HAND
                         onMouseClicked: function( e: MouseEvent ):Void {
-                                seeUser();
+                                pop.show(e);
                         }
                         translateY: 5
                     }
                     Text {
-                     translateY: 5
+                     translateY: 0
                      content: "@{screenName}: {text}"
                      wrappingWidth: bind scene.width - 90
                      fill: Color.WHITESMOKE
@@ -141,19 +184,15 @@ class TweetLine extends CustomNode  {
                         .replaceAll("^([0-9]\{2\})/([0-9]\{2\})/([0-9]\{4\}) ([0-9]\{2\}):([0-9]\{2\}):([0-9]\{2\})$"
                                     , "$2-$1 $4:$5:$6") ;
 
-        def status: HBox = HBox {
-            spacing: 5
-            translateY: 65
-            content: [
-                        Text {
+
+
+        def status: Text = Text {
+                            translateX: 5
+                            translateY: 75
                             fill: Color.rgb(0,153,255),
                             content: formatedDate,
                             font: Font {size: 10}
                         }
-                    ]
-        }
-
-
         
         def rect: Rectangle = Rectangle {
             fill: Color.rgb(80, 80, 80);
@@ -176,10 +215,10 @@ def desktop: Desktop = Desktop.getDesktop();
 var isDown: Boolean = false;
 
 def twitter: Twitter = new Twitter();
-def consumerKey :String = "tSYh5dVobnKTnxjKSqPhEQ";
-def consumerSecret: String = "zoJcXbD0xUKBrKYTQ5QOFPS0PmR8SrOzjh7rJtRdEQU";
-//def resource: Resource = Storage { source: "/extras/downloads/flow-oauth-pim.txt" }.resource ;
-def resource: Resource = Storage { source: "flow-oauth-pim.txt" }.resource ;
+def consumerKey :String = "";
+def consumerSecret: String = "";
+def resource: Resource = Storage { source: "/extras/downloads/flow-oauth-pim.txt" }.resource ;
+//def resource: Resource = Storage { source: "flow-oauth-pim.txt" }.resource ;
 
 def n: Long = 5 * 60 * 1000 ;
 def userQueue: ProcessQueue = new ProcessQueue(n);
@@ -277,7 +316,7 @@ def content: VBox = VBox {
 
 def scene: Scene = Scene {
     fill:  Color.rgb(51,51,51);
-    content: content
+    content: [ content ]
 }
 
 function logout(): Void {
