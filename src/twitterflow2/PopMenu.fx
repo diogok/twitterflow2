@@ -13,9 +13,10 @@ import javafx.scene.text.Text;
 import javafx.scene.paint.Color;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.Scene;
-import java.lang.System;
 
 import javafx.scene.Cursor;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
 
 /**
  * @author diogo
@@ -33,6 +34,7 @@ public class PopMenu {
     public var width: Number = 175 ;
 
     public var scene: Scene ;
+
 
     public function create(): VBox {
         def vbox: VBox = VBox {
@@ -71,28 +73,63 @@ public class PopMenu {
 
     var box: VBox;
     var rect: Rectangle;
+    var t: Timeline ;
 
-    public function show(e: MouseEvent): Void {
+    public function show(x: Number, y:Number): Void {
         box = create();
-        box.translateX = e.sceneX;
-        box.translateY = e.sceneY;
+        box.translateX = x;
+        box.translateY =y;
+        box.opacity = 0.0;
         rect = Rectangle {
             fill: Color.BLACK
-            opacity: 0.7
+            opacity: 0.0
             width: bind scene.width
             height: bind scene.height
             onMouseClicked: dissmiss
         } ;
-        insert rect into scene.content;
-        insert box into scene.content;
+        t = Timeline {
+            repeatCount: 1
+            keyFrames: [
+                    for(i in [0..5]) {
+                        KeyFrame {
+                            canSkip: true
+                            time: (0.2s * i )+ 0.1s
+                            action: function() {
+                                FX.deferAction(function() : Void{
+                                    rect.opacity = 0.15 * i;
+                                    box.opacity = 0.2 * i;
+                                });
+                            }
+                        }
+                    }
+                ]
+        }
+        t.play();
+        FX.deferAction(function():Void {
+            insert rect into scene.content;
+            insert box into scene.content;
+        });
+    }
+
+    public function getShow(): function(): Void {
+        return show ;
+    }
+
+    public function show(): Void {
+        show((scene.width/2) - (width/2),(scene.height/2) - ((sizeof itens*25)/2));
+    }
+    
+    public function show(e: MouseEvent): Void {
+        show(e.sceneX,e.sceneY);
     }
 
     public function dissmiss(): Void {
+         t.stop();
          delete box from scene.content;
          delete rect from scene.content;
          rect = null;
          box = null;
-         System.gc();
+         t = null;
     }
 
     public function dissmiss(e: MouseEvent): Void {

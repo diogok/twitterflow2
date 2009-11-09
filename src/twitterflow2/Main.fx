@@ -11,202 +11,27 @@ import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.io.Storage;
-import javafx.io.Resource;
-import java.io.InputStream;
-import java.lang.StringBuffer;
 import javafx.scene.control.TextBox;
 import javafx.scene.control.Button;
-import java.io.OutputStream;
-import javafx.geometry.HPos;
 import twitter4j.Twitter;
-import twitter4j.http.RequestToken;
 import twitter4j.http.AccessToken;
 import java.lang.System;
 import java.lang.Runtime;
 import java.lang.Exception;
-import twitter4j.Status;
 import twitterflow2.ProcessQueue;
 import java.lang.Runnable;
-import twitter4j.Paging;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
-import javafx.scene.Cursor;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.text.Text;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.Desktop;
 import java.awt.event.MouseListener;
-import twitter4j.TwitterException;
-import twitter4j.Query;
-import twitter4j.Tweet;
-import javafx.scene.Group;
-import javafx.scene.CustomNode;
-import javafx.scene.shape.Rectangle;
-import java.util.Date;
-import twitter4j.DirectMessage;
-import javafx.scene.text.Font;
-import java.net.URLEncoder;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+import javafx.scene.text.Text;
+
 
 /**
  * @author diogo
  */
 
-var images: Image[] ;
-
-function getImage(url:String, width: Integer, height: Integer) {
-    for(i in images) {
-        if(i.url == url) {
-            return i;
-        }
-    }
-    def im: Image = Image{
-        url: url
-        width: width
-        height: height
-        backgroundLoading: true
-        placeholder: Image { url: "{__DIR__}placeholder.png", width: width, height:  height }
-    }
-    insert im into images;
-    return im;
-}
-
-function createLine(id: Long, image: String, name:String, text:String , date:Date):TweetLine {
-    return TweetLine {
-        profileImageUrl: image
-        screenName: name
-        text: text
-        date: date
-        tweetId: id
-    }
-}
-
-class TweetLine extends CustomNode  {
-    public-init var profileImageUrl: String;
-    public-init var screenName: String;
-    public-init var text: String ;
-    public-init var date: Date ;
-    public-init var tweetId: Long;
-
-    function retweet():Void {
-        input.text = "RT @{screenName}: {text}";
-    }
-
-    function reply():Void {
-        input.text = "@{screenName} ";
-
-    }
-
-    function direct():Void {
-        input.text = "d {screenName} ";
-    }
-
-    function link(url: String): Void {
-        openURL(url);
-    }
-
-    function seeTweet(): Void {
-        openURL("http://twitter.com/{screenName}/statuses/{tweetId}");
-    }
-
-    function seeUser(): Void {
-        openURL("http://twitter.com/{screenName}");
-    }
-
-    override function create() {
-
-        def pop:PopMenu = PopMenu {
-            itens: ["Profile","Retweet","Reply","Direct"]
-            scene: stage.scene
-            action: function(str: String) {
-                if(str == "Profile") {
-                    seeUser();
-                } else if(str == "Retweet") {
-                    retweet();
-                } else if(str == "Reply") {
-                    reply();
-                } else if(str == "Direct") {
-                    direct();
-                } else if(str.startsWith("#")){
-                    link("http://search.twitter.com/search?q={URLEncoder.encode(str)}");
-                } else if(str.startsWith("@")){
-                    link("http://twitter.com/{str.substring(1)}");
-                } else {
-                    link(str);
-                }
-            }
-        }
-
-        var patttern: Pattern = Pattern.compile("(https?://[^ ]+)");
-        var matcher: Matcher = patttern.matcher(text);
-        while(matcher.find()) {
-            insert matcher.group() into pop.itens ;
-        }
-
-        patttern = Pattern.compile("(#[^ ).,:]+)");
-        matcher = patttern.matcher(text);
-        while(matcher.find()) {
-            insert matcher.group() into pop.itens ;
-        }
-
-        patttern = Pattern.compile("(@[^ ).,:]+)");
-        matcher = patttern.matcher(text);
-        while(matcher.find()) {
-            insert matcher.group() into pop.itens ;
-        }
-
-        def hbox:HBox =HBox {
-                spacing: 5
-                translateX: 5
-                translateY: 5
-                content: [
-                    ImageView {
-                        image: getImage(profileImageUrl,46,46)
-                        cursor: Cursor.HAND
-                        onMouseClicked: function( e: MouseEvent ):Void {
-                                pop.show(e);
-                        }
-                        translateY: 5
-                    }
-                    Text {
-                     translateY: 0
-                     content: "@{screenName}: {text}"
-                     wrappingWidth: bind scene.width - 90
-                     fill: Color.WHITESMOKE
-                    }
-                ]
-        };
-
-        def formatedDate = date.toLocaleString()
-                        .replaceAll("^([0-9]\{2\})/([0-9]\{2\})/([0-9]\{4\}) ([0-9]\{2\}):([0-9]\{2\}):([0-9]\{2\})$"
-                                    , "$2-$1 $4:$5:$6") ;
-
-
-
-        def status: Text = Text {
-                            translateX: 5
-                            translateY: 75
-                            fill: Color.rgb(0,153,255),
-                            content: formatedDate,
-                            font: Font {size: 10}
-                        }
-        
-        def rect: Rectangle = Rectangle {
-            fill: Color.rgb(80, 80, 80);
-            height: 80
-            width: bind scene.width - 30
-        }
-
-        def group: Group = Group {
-            content: [ rect, hbox, status ]
-        }
-
-        return group ;
-    }
-}
 
 def sysTray: SystemTray = SystemTray.getSystemTray();
 def image: Image = Image{ url: "{__DIR__}placeholder.png" } ;
@@ -214,25 +39,16 @@ def icon: TrayIcon = new TrayIcon(image.platformImage as java.awt.image.Buffered
 def desktop: Desktop = Desktop.getDesktop();
 var isDown: Boolean = false;
 
-def twitter: Twitter = new Twitter();
-def consumerKey :String = "";
-def consumerSecret: String = "";
-def resource: Resource = Storage { source: "/extras/downloads/flow-oauth-pim.txt" }.resource ;
-//def resource: Resource = Storage { source: "flow-oauth-pim.txt" }.resource ;
+public def twitter: Twitter = new Twitter();
 
 def n: Long = 5 * 60 * 1000 ;
-def userQueue: ProcessQueue = new ProcessQueue(n);
-def n2: Long = 1 * 60 * 1000 / 2;
-def searchQueue: ProcessQueue = new ProcessQueue(n2);
-def n3: Long = 5 * 1000;
+public def userQueue: ProcessQueue = new ProcessQueue(n);
+def n2: Long = 2 * 60 * 1000;
+public def searchQueue: ProcessQueue = new ProcessQueue(n2);
+def n3: Long = 3 * 1000;
 def trayQueue: ProcessQueue = new ProcessQueue(n3,n3,false);
 
-var stage: Stage ;
-
-var sinceUser: Long = 1;
-var sinceSearch: Long = 1;
-var sinceMentions: Long = 1;
-var sinceDirects: Long = 1;
+public-read var stage: Stage ;
 
 def HOME:Integer = 0;
 def MENTIONS:Integer = 1;
@@ -241,10 +57,23 @@ def SEARCH:Integer = 3;
 
 var active:Integer = HOME;
 
-var statusLines: TweetLine[];
-var mentionsLines: TweetLine[];
-var directsLines: TweetLine[];
-var searchsLines: TweetLine[];
+
+def startStream = Stream.startStream ;
+def startStreamSearch = Stream.startStreamSearch ;
+def loadLists = Stream.loadLists;
+
+def listMenu: PopMenu = PopMenu {
+    scene: scene
+    itens: bind [
+            for(l in Stream.lists) {
+                l.name;
+            }
+    ]
+    action: function(list: String): Void {
+        Stream.setList(list);
+        openHome();
+    }
+}
 
 def send: Button = Button {
     text: "Send"
@@ -254,26 +83,44 @@ def send: Button = Button {
                     twitter.updateStatus(input.text);
                     FX.deferAction(function(): Void{ input.text = "" });
                     showMessage("Status updated");
-                    startStream();
+                    Stream.startStream();
                 }
         });
     }
 }
 
-def input: TextBox = TextBox {
+public def input: TextBox = TextBox {
     promptText: "What are you doing?"
     action: send.action
-    columns: 35
+    columns: 38
 }
 
-def inputBar: HBox = HBox {
-    spacing: 6
-    content: [input, send]
+def counterIntro: Text = Text {
+    translateY: 8
+    fill: Color.WHITESMOKE
+    content: "You have left"
+}
+
+def counter: Text = Text {
+    translateY: 8
+    fill: Color.RED
+    content: bind "{(140 - input.rawText.length()).toString()} characters"
+}
+
+def inputBar:VBox = VBox {
+    spacing: 5
+    content: [
+        input,
+        HBox {
+            spacing: 5
+            content: [counterIntro, counter, send]
+        }
+    ]
 }
 
 def mainBar: HBox = HBox {
     spacing: 5
-    content: [ Button{ text: "Home", action: openHome} , Button{text: "Mentions", action: openMentions}
+    content: [ Button{ text: "Home", action: listMenu.getShow() } , Button{text: "Mentions", action: openMentions}
                , Button{text: "Directs", action: openDirects} , Button{text: "Search", action: openSearch}
                , Button{ text: "Logout" , action: logout}]
 }
@@ -281,7 +128,7 @@ def mainBar: HBox = HBox {
 def tweetList: Clippy = Clippy {
     nodeSize: 80
     inner: VBox  {spacing: 5, content: [] }
-    height: bind if(active == SEARCH) { scene.height - 100 } else { scene.height - 75 }
+    height: bind if(active == SEARCH){scene.height - 125}else{scene.height-100}
     width: bind scene.width
 }
 
@@ -290,7 +137,6 @@ def searchButton: Button = Button {
     action: function(): Void {
         def txt = inputSearch.text ;
         inputSearch.text = "";
-        sinceSearch = 1;
         tweetList.update(null);
         startStreamSearch(txt);
     }
@@ -307,11 +153,12 @@ def searchBar: HBox = HBox {
     content: [ inputSearch, searchButton]
 }
 
+
 def content: VBox = VBox {
     spacing: 5
     translateX: 10
     translateY: 10
-    content:[ mainBar , tweetList ,  inputBar]
+    content:[ mainBar,  tweetList ,  inputBar]
 }
 
 def scene: Scene = Scene {
@@ -320,7 +167,7 @@ def scene: Scene = Scene {
 }
 
 function logout(): Void {
-    saveToken("", "");
+    Config.saveToken("", "");
     stage.close();
 }
 
@@ -353,214 +200,57 @@ function openSearch():Void {
     updateClippySearch();
 }
 
-function updateClippy():Void {
-        if(active != HOME) return;
-        tweetList.update(statusLines);
+public function updateClippy(list: TweetLine[]):Void {
+    if(active != HOME) return;
+    for(t in reverse list) {
+        tweetList.putAtStart(t);
+        tweetList.removeLast();
+    }
+};
+public function updateClippyMentions(list: TweetLine[]):Void {
+    if(active != MENTIONS) return;
+    for(t in reverse list) {
+        tweetList.putAtStart(t);
+        tweetList.removeLast();
+    }
 };
 
-function updateClippyMentions():Void {
-        if(active != MENTIONS) return;
-        tweetList.update(mentionsLines);
+public function updateClippyDirects(list: TweetLine[]):Void {
+    if(active != DIRECTS) return;
+    for(t in reverse list) {
+        tweetList.putAtStart(t);
+        tweetList.removeLast();
+    }
 };
 
-function updateClippyDirects():Void {
-        if(active != DIRECTS) return;
-        tweetList.update(directsLines)
+public function updateClippySearch(list: TweetLine[]):Void {
+    if(active != SEARCH) return;
+    for(t in reverse list) {
+        tweetList.putAtStart(t);
+        tweetList.removeLast();
+    }
 };
 
-function updateClippySearch():Void {
-        if(active != SEARCH) return;
-        tweetList.update(searchsLines);
+public function updateClippy():Void {
+    if(active != HOME) return;
+    tweetList.update(Stream.status.lines);
+};
+public function updateClippyMentions():Void {
+    if(active != MENTIONS) return;
+    tweetList.update(Stream.mentions.lines);
 };
 
-function startStream():Void {
-    userQueue.reset();
-    userQueue.insert(Runnable {
-            override function run() {
-                var list ;
-                if(sinceUser == 1) {
-                    delete statusLines;
-                }
+public function updateClippyDirects():Void {
+    if(active != DIRECTS) return;
+    tweetList.update(Stream.directs.lines)
+};
 
-                try {
-                    list = twitter.getFriendsTimeline(new Paging(1,50,sinceUser));
-                } catch(te: TwitterException) {
-                    showMessage("Some problem happened retreiving tweets.");
-                    te.printStackTrace();
-                    return ;
-                }
+public function updateClippySearch():Void {
+    if(active != SEARCH) return;
+    tweetList.update(Stream.searchs.lines);
+};
 
-                var count = 0;
-                def max = list.size();
-                while(count < max) {
-                    def s:Status = list.get(count);
-                    if(sinceUser == 1) {
-                        insert createLine(  s.getId()
-                                            , s.getUser().getProfileImageURL().toString()
-                                            , s.getUser().getScreenName()
-                                            , s.getText()
-                                            , s.getCreatedAt()) into statusLines ;
-                    } else  {
-                        insert createLine(  s.getId()
-                                            , s.getUser().getProfileImageURL().toString()
-                                            , s.getUser().getScreenName()
-                                            , s.getText()
-                                            , s.getCreatedAt()) before statusLines[count] ;
-                        delete statusLines[sizeof statusLines];
-                        showMessage("{s.getUser().getScreenName()}"
-                                    ":{s.getText()}");
-                    }
-                    count++;
-                }
-                System.gc();
-                if(max >= 1) {
-                    sinceUser = list.get(0).getId();
-                    updateClippy();
-                }
-            }
-    },true);
-    userQueue.insert(Runnable {
-            override function run() {
-                var list ;
-                if(sinceMentions == 1) {
-                    delete mentionsLines;
-                }
-
-                try {
-                    list = twitter.getMentions(new Paging(1,50,sinceMentions));
-                } catch(te: TwitterException) {
-                    showMessage("Some problem happened retreiving tweets.");
-                    te.printStackTrace();
-                    return ;
-                }
-
-                var count = 0;
-                def max = list.size();
-                while(count < max) {
-                    def s:Status = list.get(count);
-                    if(sinceUser == 1) {
-                        insert createLine(  s.getId()
-                                            , s.getUser().getProfileImageURL().toString()
-                                            , s.getUser().getScreenName()
-                                            , s.getText()
-                                            , s.getCreatedAt()) into mentionsLines ;
-                    } else  {
-                        insert createLine(  s.getId()
-                                            , s.getUser().getProfileImageURL().toString()
-                                            , s.getUser().getScreenName()
-                                            , s.getText()
-                                            , s.getCreatedAt()) before mentionsLines[count] ;
-                        delete mentionsLines[sizeof mentionsLines];
-                        showMessage("{s.getUser().getScreenName()}"
-                                    ":{s.getText()}");
-                    }
-                    count++;
-                }
-                System.gc();
-                if(max >= 1) {
-                    sinceMentions = list.get(0).getId();
-                    updateClippyMentions();
-                }
-            }
-    },true);
-    userQueue.insert(Runnable {
-            override function run() {
-                var list ;
-                if(sinceDirects == 1) {
-                    delete directsLines;
-                }
-
-                try {
-                    list = twitter.getDirectMessages(new Paging(1,50,sinceDirects));
-                } catch(te: TwitterException) {
-                    showMessage("Some problem happened retreiving tweets.");
-                    te.printStackTrace();
-                    return ;
-                }
-
-                var count = 0;
-                def max = list.size();
-                while(count < max) {
-                    def s:DirectMessage = list.get(count);
-                    if(sinceUser == 1) {
-                        insert createLine(  s.getId()
-                                            , null
-                                            , s.getSenderScreenName()
-                                            , s.getText()
-                                            , s.getCreatedAt()) into directsLines ;
-                    } else  {
-                        insert createLine(  s.getId()
-                                            , null
-                                            , s.getSenderScreenName()
-                                            , s.getText()
-                                            , s.getCreatedAt()) before directsLines[count] ;
-                        delete directsLines[sizeof directsLines];
-                        showMessage("{s.getSenderScreenName()}"
-                                    ":{s.getText()}");
-                    }
-                    count++;
-                }
-                System.gc();
-                if(max >= 1) {
-                    sinceDirects = list.get(0).getId();
-                    updateClippyDirects();
-                }
-            }
-    },true);
-}
-
-function startStreamSearch(txt: String): Void {
-    searchQueue.reset();
-    searchQueue.insert(Runnable {
-            override function run():Void {
-                def query: Query = new Query(txt);
-                query.setSinceId(sinceSearch);
-
-                if(sinceSearch == 1) {
-                    delete searchsLines ;
-                }
-
-
-                var list ;
-                try {
-                    def resul = twitter.search(query);
-                    list = resul.getTweets();
-                } catch(te: TwitterException) {
-                    showMessage("Some problem happened retreiving search.");
-                    te.printStackTrace();
-                    return ;
-                }
-                var count = 0;
-                def max = list.size();
-                while(count < max) {
-                     def s: Tweet = list.get(count);
-                    if(sinceSearch == 1) {
-                        insert createLine(s.getId()
-                                            , s.getProfileImageUrl()
-                                            , s.getFromUser()
-                                            , s.getText()
-                                            , s.getCreatedAt()) into searchsLines ;
-                    } else  {
-                        insert createLine(s.getId()
-                                            , s.getProfileImageUrl()
-                                            , s.getFromUser()
-                                            , s.getText()
-                                            , s.getCreatedAt()) before searchsLines[count] ;
-                        delete searchsLines[sizeof searchsLines];
-                        showMessage("{s.getFromUser()}"
-                                    ":{s.getText()}");
-                    }
-                    count++;
-                }
-                if(max >= 1) {
-                    sinceSearch = list.get(0).getId();
-                    updateClippySearch();
-                }
-            }
-    },true);
-}
-
-function showMessage(msg: String): Void {
+public function showMessage(msg: String): Void {
     def id:Integer = trayQueue.insert(Runnable {
             override function run() {
                 icon.displayMessage("TwitterFlow",msg,TrayIcon.MessageType.INFO);
@@ -568,7 +258,27 @@ function showMessage(msg: String): Void {
         });
 }
 
+public function openURL(url:String): Void {
+    def  browsers:String[] = [ "opera", "firefox", "safari",  "konqueror", "epiphany",
+          "seamonkey", "galeon", "kazehakase", "mozilla", "netscape" ];
+     var osName:String = System.getProperty("os.name");
+     var found: Boolean ;
+     if (osName.startsWith("Windows")) {
+        Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler {url}");
+     } else {
+        for (browser in browsers) {
+           if (found == false) {
+              found = Runtime.getRuntime().exec(["which", browser]).waitFor() == 0;
+              if (found) {
+                 Runtime.getRuntime().exec("{browser} {url}");
+              }
+           }
+       }
+     }
+}
+
 function startApp(): Void {
+    loadLists();
     startStream();
     userQueue.start();
     searchQueue.start();
@@ -576,7 +286,7 @@ function startApp(): Void {
     stage = Stage {
         title: "TwitterFlow"
         width: 352
-        height: 440
+        height: 450
         scene: scene
     }
     icon.setImageAutoSize(true);
@@ -597,104 +307,13 @@ function startApp(): Void {
     if(sysTray.isSupported()) {
         sysTray.add(icon);
     }
-}
-
-function openConfig(): Void {
-    def requestToken: RequestToken = twitter.getOAuthRequestToken();
-
-    def requestAuth: Button = Button {
-                                    text: "Request Authorization"
-                                    action: function() {
-                                        openURL(requestToken.getAuthorizationURL());
-                                    }
-                     };
-
-    def pimRegister: Button = Button { text:" Enter and Save PIN  ",
-                        action: function() {
-                                    def accessToken: AccessToken =
-                                        twitter.getOAuthAccessToken(requestToken, pimField.text);
-                                    saveToken(accessToken.getToken(), accessToken.getTokenSecret());
-                                    twitter.setOAuthAccessToken(accessToken);
-                                    startApp();
-                                    cStage.close();
-                                    System.gc();
-                                }
-                     };
-    def pimNoRegister: Button = Button { text:"Enter and Discard PIN",
-                        action: function() {
-                                    def accessToken: AccessToken =
-                                        twitter.getOAuthAccessToken(requestToken, pimField.text);
-                                    //saveToken(accessToken.getToken(), accessToken.getTokenSecret());
-                                    twitter.setOAuthAccessToken(accessToken);
-                                    startApp();
-                                    cStage.close();
-                                    System.gc();
-                                }
-                     };
-
-    def pimField: TextBox = TextBox {action: pimRegister.action, promptText: "PIN", columns: 18} ;
-    def cStage:Stage = Stage {
-        title: "TwitterFlow - Configure"
-        width : 200
-        height: 170
-        scene: Scene {
-            fill: Color.BLACK
-            content: [VBox {
-                        translateX: 20
-                        translateY: 20
-                        hpos: HPos.CENTER 
-                        spacing: 5
-                        content: [ requestAuth, pimField,pimRegister, pimNoRegister ]
-                    }]
-        }
-
-    }
-
-}
-
-function getToken(): AccessToken {
-       def is: InputStream = resource.openInputStream();
-       def sb:StringBuffer = StringBuffer{};
-       var c= is.read();
-       while(c != -1) {
-           sb.append(c as Character);
-           c = is.read();
-       }
-       is.close();
-       def arg: String[] = sb.toString().split("\n");
-       new AccessToken(arg[0],arg[1])
-}
-
-function saveToken( token: String,secret: String): Void {
-    def os: OutputStream = resource.openOutputStream(true);
-    os.write("{token}\n{secret}".getBytes());
-    os.close();
-}
-
-def  browsers:String[] = [ "opera", "firefox", "safari",  "konqueror", "epiphany",
-      "seamonkey", "galeon", "kazehakase", "mozilla", "netscape" ];
-
-public function openURL(url:String): Void {
-     var osName:String = System.getProperty("os.name");
-     var found: Boolean ;
-     if (osName.startsWith("Windows")) {
-        Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler {url}");
-     } else {
-        for (browser in browsers) {
-           if (found == false) {
-              found = Runtime.getRuntime().exec(["which", browser]).waitFor() == 0;
-              if (found) {
-                 Runtime.getRuntime().exec("{browser} {url}");
-              }
-           }
-       }
-     }
+    listMenu.scene = scene;
 }
 
 function run() {
-    twitter.setOAuthConsumer(consumerKey, consumerSecret);
+    twitter.setOAuthConsumer(Config.consumerKey, Config.consumerSecret);
     try {
-        var atk: AccessToken = getToken();
+        var atk: AccessToken = Config.getToken();
         if(atk.getToken().length() <= 4) {
             throw new Exception("No token");
         } else {
@@ -703,6 +322,6 @@ function run() {
         }
     } catch(e: Exception) {
         e.printStackTrace();
-        openConfig();
+        Config.openConfig(twitter,startApp);
     }
 }

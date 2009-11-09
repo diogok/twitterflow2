@@ -17,7 +17,7 @@ public class ProcessQueue  {
     private Long between;
     private boolean active;
     private boolean loop;
-    private int size = 2;
+    private int size = 10;
 
     public ProcessQueue() {
         active = true;
@@ -60,7 +60,7 @@ public class ProcessQueue  {
         for(int i=0;i < count;i++) {
             oldList[i] = list[i];
         }
-        list = new Runnable[count + size];
+        list = new Runnable[count + count + size];
         for(int i =0;i < count;i++) {
             list[i] = oldList[i];
         }
@@ -91,6 +91,7 @@ public class ProcessQueue  {
     }
 
     public void start() {
+        active = true;
         new Thread() {
             @Override
             public void run() {
@@ -127,7 +128,7 @@ public class ProcessQueue  {
     }
 
     public void reset() {
-        list = new Runnable[size];
+        list = new Runnable[(count > size)?count :size];
         count = 0;
     }
 
