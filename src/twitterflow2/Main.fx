@@ -120,7 +120,7 @@ def inputBar:VBox = VBox {
 
 def mainBar: HBox = HBox {
     spacing: 5
-    content: [ Button{ text: "Home", action: listMenu.getShow() } , Button{text: "Mentions", action: openMentions}
+    content: [ Button{ text: "Home", action: homeAct } , Button{text: "Mentions", action: openMentions}
                , Button{text: "Directs", action: openDirects} , Button{text: "Search", action: openSearch}
                , Button{ text: "Logout" , action: logout}]
 }
@@ -164,6 +164,15 @@ def content: VBox = VBox {
 def scene: Scene = Scene {
     fill:  Color.rgb(51,51,51);
     content: [ content ]
+}
+
+function homeAct(): Void {
+        println("me {sizeof Stream.lists}");
+        if(sizeof Stream.lists > 1) {
+            listMenu.show();
+        } else {
+            openHome();
+        }
 }
 
 function logout(): Void {
