@@ -167,7 +167,6 @@ def scene: Scene = Scene {
 }
 
 function homeAct(): Void {
-        println("me {sizeof Stream.lists}");
         if(sizeof Stream.lists > 1) {
             listMenu.show();
         } else {

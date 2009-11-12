@@ -27,11 +27,10 @@ import javafx.io.Storage;
  * @author diogo
  */
 
-
-public def consumerKey :String = "tSYh5dVobnKTnxjKSqPhEQ";
-public def consumerSecret: String = "zoJcXbD0xUKBrKYTQ5QOFPS0PmR8SrOzjh7rJtRdEQU";
-def resource: Resource = Storage { source: "/extras/downloads/flow-oauth-pim.txt" }.resource ;
-//def resource: Resource = Storage { source: "flow-oauth-pim.txt" }.resource ;
+public def consumerKey :String = "";
+public def consumerSecret: String = "";
+//def resource: Resource = Storage { source: "/extras/downloads/flow-oauth-pim.txt" }.resource ;
+def resource: Resource = Storage { source: "flow-oauth-pim.txt" }.resource ;
 
 public function openConfig(twitter: Twitter, start: function()): Void {
     def requestToken: RequestToken = twitter.getOAuthRequestToken();
