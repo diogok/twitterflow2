@@ -14,19 +14,13 @@ import javafx.scene.layout.VBox;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
 import java.lang.Math;
-import java.lang.Runnable;
-import javafx.animation.transition.ScaleTransition;
   
 /** 
  * @author diogo
  */
 public class Clippy extends ClipView {
 
-
-    def interval: Long = 100;
-    def queue: ProcessQueue = new ProcessQueue(interval,interval,false);
-
-    
+   
     public var nodeSize: Number = 90;
 
     def whellWall = function(event: MouseEvent):Void {
@@ -72,43 +66,22 @@ public class Clippy extends ClipView {
     }
 
     public function animate(node: Node,pos: Integer): Void {
-        queue.insert( Runnable {
-            override function run(): Void {
-                FX.deferAction(function(): Void {
-                    node.scaleY = 0 ;
-                    delete node from inner.content ;
-                    if(pos != -1) {
-                        insert node before inner.content[pos] ;
-                    } else {
-                        insert node into inner.content ;
-                    }
-
-                });
+        FX.deferAction(function(): Void {
+            delete node from inner.content ;
+            if(pos != -1) {
+                insert node before inner.content[pos] ;
+            } else {
+                insert node into inner.content ;
             }
         });
-        for(i in [1..5]) {
-            queue.insert( Runnable {
-                override function run(): Void {
-                    FX.deferAction(function(): Void {
-                        node.scaleY = 0.2 * i ;
-                    });
-                }
-            });
-         }
     }
     public function deAnimate(node: Node): Void {
-        queue.insert( Runnable {
-            override function run(): Void {
-                FX.deferAction(function(): Void {
-                    delete node from inner.content ;
-                });
-            }
+        FX.deferAction(function(): Void {
+            delete node from inner.content ;
         });
     }
 
     public function update(nodes: Node[]): Void {
-        queue.stop();
-        queue.reset();
         FX.deferAction(function(): Void {
             delete inner.content ;
         });
@@ -116,7 +89,6 @@ public class Clippy extends ClipView {
             for(node in nodes) {
                 animate(node,-1);
             }
-            queue.start();
         }
     }
 
